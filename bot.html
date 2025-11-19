@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Telegram Country Bot - Web Version</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: #2c3e50;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 24px;
+            margin-bottom: 5px;
+        }
+        
+        .header p {
+            opacity: 0.8;
+            font-size: 14px;
+        }
+        
+        .content {
+            padding: 25px;
+        }
+        
+        .input-group {
+            margin-bottom: 20px;
+        }
+        
+        input[type="text"] {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+        
+        button {
+            width: 100%;
+            padding: 15px;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        
+        button:hover {
+            background: #2980b9;
+        }
+        
+        .result {
+            margin-top: 25px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border-left: 4px solid #3498db;
+            display: none;
+        }
+        
+        .country-flag {
+            font-size: 2em;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        
+        .info-line {
+            margin: 8px 0;
+            padding: 5px 0;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .suggestions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 15px;
+        }
+        
+        .suggestion-chip {
+            background: #e3f2fd;
+            color: #1976d2;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .suggestion-chip:hover {
+            background: #bbdefb;
+            transform: translateY(-1px);
+        }
+        
+        .telegram-link {
+            text-align: center;
+            margin-top: 20px;
+            padding: 15px;
+            background: #0088cc;
+            color: white;
+            border-radius: 8px;
+            text-decoration: none;
+            display: block;
+            font-weight: bold;
+        }
+        
+        .error {
+            border-left-color: #e74c3c !important;
+            background: #ffeaea;
+        }
+        
+        .success {
+            border-left-color: #27ae60 !important;
+            background: #eafaf1;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🌍 Country Info Bot</h1>
+            <p>Get country codes, timezones, and flags instantly</p>
+        </div>
+        
+        <div class="content">
+            <div class="input-group">
+                <input type="text" id="countryInput" placeholder="Enter country name (e.g., Bangladesh, Japan, USA)">
+                <button onclick="getCountryInfo()">Get Country Information</button>
+            </div>
+            
+            <div class="suggestions">
+                <div class="suggestion-chip" onclick="setCountry('Bangladesh')">Bangladesh 🇧🇩</div>
+                <div class="suggestion-chip" onclick="setCountry('USA')">USA 🇺🇸</div>
+                <div class="suggestion-chip" onclick="setCountry('Japan')">Japan 🇯🇵</div>
+                <div class="suggestion-chip" onclick="setCountry('Germany')">Germany 🇩🇪</div>
+                <div class="suggestion-chip" onclick="setCountry('India')">India 🇮🇳</div>
+            </div>
+            
+            <div id="result" class="result">
+                <!-- Results will appear here -->
+            </div>
+            
+            <a href="https://t.me/YourBotUsername" class="telegram-link" target="_blank">
+                💬 Use our Telegram Bot
+            </a>
+        </div>
+    </div>
+
+    <script>
+        // Country database
+        const countryDatabase = {
+            'afghanistan': {code: 'AF', timezone: 'Asia/Kabul', flag: '🇦🇫'},
+            'albania': {code: 'AL', timezone: 'Europe/Tirane', flag: '🇦🇱'},
+            'algeria': {code: 'DZ', timezone: 'Africa/Algiers', flag: '🇩🇿'},
+            'argentina': {code: 'AR', timezone: 'America/Argentina/Buenos_Aires', flag: '🇦🇷'},
+            'australia': {code: 'AU', timezone: 'Australia/Sydney', flag: '🇦🇺'},
+            'austria': {code: 'AT', timezone: 'Europe/Vienna', flag: '🇦🇹'},
+            'bangladesh': {code: 'BD', timezone: 'Asia/Dhaka', flag: '🇧🇩'},
+            'belgium': {code: 'BE', timezone: 'Europe/Brussels', flag: '🇧🇪'},
+            'brazil': {code: 'BR', timezone: 'America/Sao_Paulo', flag: '🇧🇷'},
+            'canada': {code: 'CA', timezone: 'America/Toronto', flag: '🇨🇦'},
+            'china': {code: 'CN', timezone: 'Asia/Shanghai', flag: '🇨🇳'},
+            'denmark': {code: 'DK', timezone: 'Europe/Copenhagen', flag: '🇩🇰'},
+            'egypt': {code: 'EG', timezone: 'Africa/Cairo', flag: '🇪🇬'},
+            'finland': {code: 'FI', timezone: 'Europe/Helsinki', flag: '🇫🇮'},
+            'france': {code: 'FR', timezone: 'Europe/Paris', flag: '🇫🇷'},
+            'germany': {code: 'DE', timezone: 'Europe/Berlin', flag: '🇩🇪'},
+            'greece': {code: 'GR', timezone: 'Europe/Athens', flag: '🇬🇷'},
+            'india': {code: 'IN', timezone: 'Asia/Kolkata', flag: '🇮🇳'},
+            'indonesia': {code: 'ID', timezone: 'Asia/Jakarta', flag: '🇮🇩'},
+            'iran': {code: 'IR', timezone: 'Asia/Tehran', flag: '🇮🇷'},
+            'iraq': {code: 'IQ', timezone: 'Asia/Baghdad', flag: '🇮🇶'},
+            'italy': {code: 'IT', timezone: 'Europe/Rome', flag: '🇮🇹'},
+            'japan': {code: 'JP', timezone: 'Asia/Tokyo', flag: '🇯🇵'},
+            'malaysia': {code: 'MY', timezone: 'Asia/Kuala_Lumpur', flag: '🇲🇾'},
+            'mexico': {code: 'MX', timezone: 'America/Mexico_City', flag: '🇲🇽'},
+            'netherlands': {code: 'NL', timezone: 'Europe/Amsterdam', flag: '🇳🇱'},
+            'norway': {code: 'NO', timezone: 'Europe/Oslo', flag: '🇳🇴'},
+            'pakistan': {code: 'PK', timezone: 'Asia/Karachi', flag: '🇵🇰'},
+            'philippines': {code: 'PH', timezone: 'Asia/Manila', flag: '🇵🇭'},
+            'poland': {code: 'PL', timezone: 'Europe/Warsaw', flag: '🇵🇱'},
+            'portugal': {code: 'PT', timezone: 'Europe/Lisbon', flag: '🇵🇹'},
+            'russia': {code: 'RU', timezone: 'Europe/Moscow', flag: '🇷🇺'},
+            'saudi arabia': {code: 'SA', timezone: 'Asia/Riyadh', flag: '🇸🇦'},
+            'singapore': {code: 'SG', timezone: 'Asia/Singapore', flag: '🇸🇬'},
+            'south korea': {code: 'KR', timezone: 'Asia/Seoul', flag: '🇰🇷'},
+            'spain': {code: 'ES', timezone: 'Europe/Madrid', flag: '🇪🇸'},
+            'sweden': {code: 'SE', timezone: 'Europe/Stockholm', flag: '🇸🇪'},
+            'switzerland': {code: 'CH', timezone: 'Europe/Zurich', flag: '🇨🇭'},
+            'thailand': {code: 'TH', timezone: 'Asia/Bangkok', flag: '🇹🇭'},
+            'turkey': {code: 'TR', timezone: 'Europe/Istanbul', flag: '🇹🇷'},
+            'ukraine': {code: 'UA', timezone: 'Europe/Kiev', flag: '🇺🇦'},
+            'united arab emirates': {code: 'AE', timezone: 'Asia/Dubai', flag: '🇦🇪'},
+            'united kingdom': {code: 'GB', timezone: 'Europe/London', flag: '🇬🇧'},
+            'united states': {code: 'US', timezone: 'America/New_York', flag: '🇺🇸'},
+            'usa': {code: 'US', timezone: 'America/New_York', flag: '🇺🇸'},
+            'vietnam': {code: 'VN', timezone: 'Asia/Ho_Chi_Minh', flag: '🇻🇳'}
+        };
+
+        function setCountry(country) {
+            document.getElementById('countryInput').value = country;
+            getCountryInfo();
+        }
+
+        function getCountryInfo() {
+            const countryInput = document.getElementById('countryInput').value.trim();
+            const resultDiv = document.getElementById('result');
+            
+            if (!countryInput) {
+                showResult('❌ Please enter a country name', 'error');
+                return;
+            }
+
+            const countryKey = countryInput.toLowerCase();
+            const countryData = countryDatabase[countryKey];
+            
+            if (countryData) {
+                const now = new Date();
+                const formattedTime = now.toLocaleString('en-US', {
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit',
+                    hour12: false
+                });
+                
+                const resultHTML = `
+                    <div class="country-flag">${countryData.flag}</div>
+                    <div class="info-line"><strong>Country:</strong> ${countryInput} ${countryData.flag}</div>
+                    <div class="info-line"><strong>Country Code:</strong> ${countryData.code}</div>
+                    <div class="info-line"><strong>Timezone:</strong> ${countryData.timezone}</div>
+                    <div class="info-line"><strong>Current Time:</strong> ${formattedTime}</div>
+                `;
+                
+                showResult(resultHTML, 'success');
+            } else {
+                showResult(`❌ Country "${countryInput}" not found.<br>Try: Bangladesh, USA, Japan, Germany, etc.`, 'error');
+            }
+        }
+
+        function showResult(content, type) {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = content;
+            resultDiv.className = 'result ' + type;
+            resultDiv.style.display = 'block';
+        }
+
+        // Enter key support
+        document.getElementById('countryInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                getCountryInfo();
+            }
+        });
+
+        // Focus on input when page loads
+        document.getElementById('countryInput').focus();
+    </script>
+</body>
+</html>
